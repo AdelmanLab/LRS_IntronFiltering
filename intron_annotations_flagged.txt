@@ -1,0 +1,2 @@
+i_name	i_chr	i_start	i_end	i_score	i_strand	Annotation_Intron_Number	Final_Untreated_spliced	Final_Untreated_unspliced	Final_DMSO_spliced	Final_DMSO_unspliced	txid	intron_num_corrected	FiveSS	ThreeSS	Intron_Size
+NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA 
