@@ -3,6 +3,6 @@ This repository outlines the filtering pipeline used to generate working intron 
 
 # Contents 
 1. Rscript: LRS_Intron_Filtering.R
-2. Input File: intron_splicing_counts_for_PROseq_classification_uniqueIDs_Condition_Counts_Reported_intron_num_corrected.txt
-3. Generated Output Files 
+2. Input files for Rscript
+3. Generated output files 
  
