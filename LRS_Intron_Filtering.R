@@ -1,26 +1,25 @@
-#Intron Filtering Pipeline used to generate the starting intron annotation for both uninduced and induced conditions  
+#Intron filtering pipeline used to generate the starting intron annotation for both uninduced and induced conditions  
+  #Input File: 
+    #Intron annotation derived from active annotated transcription start sites with combined replicate LRS counts per intron. 
+    #The uninduced (Final_untreated_spliced, Final_untreated_unspliced) and induced (Final_DMSO_spliced, Final_DMSO_unspliced) LRS counts per intron are in different columns
+    #The annotated intron number for minus strand annotations was corrected with respect to the gene start i.e intron 0 corresponds to the intron closest to the TSS and not the terminal intron. 
 
-#Input File: 
-  #Intron annotation from active annotated transcription start sites with combined replicate LRS counts per intron. 
-  #The uninduced (Final_untreated_spliced, Final_untreated_unspliced) and induced (Final_DMSO_spliced, Final_DMSO_unspliced) LRS counts per intron are in different columns
-  #The anotated intron number was corrected for minus strand annotations with respect to gene start i.e intron 0 corresponds to the intron closest to the TSS and not the terminal intron. 
-
-intron_norm_v2 <- read.delim("intron_splicing_counts_for_PROseq_classification_uniqueIDs_Condition_Counts_Reported_intron_num_corrected.txt", as.is = T)
+intron_start <- read.delim("intron_splicing_counts_for_PROseq_classification_uniqueIDs_Condition_Counts_Reported_intron_num_corrected.txt", as.is = T)
 
 #Remove annotations with an intron length greather than 10kb 
-intron_norm_v2$Intron_Size <- abs(intron_norm_v2$i_start - intron_norm_v2$i_end)
-intron_norm_SSassigned_lengthfilter <- subset(intron_norm_v2, intron_norm_v2$Intron_Size <= 10000)
+intron_start$Intron_Size <- abs(intron_start$i_start - intron_start$i_end)
+intron_lengthfilter <- subset(intron_start, intron_start$Intron_Size <= 10000)
 
 #Remove annotations with 0 spliced read counts per condition 
-intron_norm_MEL <- subset(intron_norm_SSassigned_lengthfilter, intron_norm_SSassigned_lengthfilter$Final_Untreated_spliced > 0)
-intron_norm_DMSO <- subset(intron_norm_SSassigned_lengthfilter, intron_norm_SSassigned_lengthfilter$Final_DMSO_spliced > 0)
+intron_norm_MEL <- subset(intron_lengthfilter, intron_lengthfilter$Final_Untreated_spliced > 0)
+intron_norm_DMSO <- subset(intron_lengthfilter, intron_lengthfilter$Final_DMSO_spliced > 0)
 
-write.table(intron_norm_MEL, "intron_norm_v2_MEL_spliced>0.txt", sep="\t", row.names = FALSE, quote = FALSE)
-write.table(intron_norm_DMSO, "intron_norm_v2_DMSO_spliced>0.txt", sep="\t", row.names = FALSE, quote = FALSE)
+write.table(intron_norm_MEL, "introns_MEL_spliced>0.txt", sep="\t", row.names = FALSE, quote = FALSE)
+write.table(intron_norm_DMSO, "introns_DMSO_spliced>0.txt", sep="\t", row.names = FALSE, quote = FALSE)
 
 #Rank order introns by strand, Chr, 5'SS Coordinate, 3'SS Coordinate, Intron Number 
-intron_norm_MEL_spliced_sorted <- intron_norm_MEL[order(intron_norm_MEL$i_strand, intron_norm_MEL$i_chr, intron_norm_MEL$FiveSS, intron_norm_MEL$ThreeSS, intron_norm_MEL$intron_num_corrected) , ]
-intron_norm_DMSO_spliced_sorted <- intron_norm_DMSO[order(intron_norm_DMSO$i_strand, intron_norm_DMSO$i_chr, intron_norm_DMSO$FiveSS, intron_norm_DMSO$ThreeSS, intron_norm_DMSO$intron_num_corrected) , ]
+intron_MEL_spliced_sorted <- intron_norm_MEL[order(intron_norm_MEL$i_strand, intron_norm_MEL$i_chr, intron_norm_MEL$FiveSS, intron_norm_MEL$ThreeSS, intron_norm_MEL$intron_num_corrected) , ]
+intron_DMSO_spliced_sorted <- intron_norm_DMSO[order(intron_norm_DMSO$i_strand, intron_norm_DMSO$i_chr, intron_norm_DMSO$FiveSS, intron_norm_DMSO$ThreeSS, intron_norm_DMSO$intron_num_corrected) , ]
 
 #Filtering loop to do the following...
   # 1. For intron annotation duplicates, the annotation with the smaller intron number was retained
@@ -32,7 +31,7 @@ n=0                         # to count how many times the loop was repeated
 nrowremoved = 1             # Condition term for the while loop. Keep subsetting until there are no more introns (rows) to flag out. 
                             # Meaning the nrow(file that it used for that loop iteration) - nrow(if you subset for all terms with a flag=0) = 0
 
-loop_temp <- intron_norm_MEL_spliced_sorted
+loop_temp <- intron_MEL_spliced_sorted
 loop_temp_flagged <- read.delim("intron_annotations_flagged.txt", as.is = T) #Empty starting file for flagged annotations 
 
 #Filtering Loop: 
@@ -89,7 +88,7 @@ write.table(loop_temp_flagged, "Flagged_Intron_Annotation_MEL.txt", sep="\t", ro
 #Repeat code to generate the induced intron list...
 n=0                         
 nrowremoved = 1             
-loop_temp <- intron_norm_DMSO_spliced_sorted
+loop_temp <- intron_DMSO_spliced_sorted
 loop_temp_flagged <- read.delim("intron_annotations_flagged.txt", as.is = T) 
 
 #Filtering Loop: 
@@ -97,11 +96,8 @@ while ( nrowremoved !=0 ) {
   
   if ( n == 0 ){
     loop_temp$flag <- 0               
-    loop_temp$duplicates <- NA       
-    
     loop_temp_flagged$flag <- 0           
-    loop_temp_flagged$duplicates <- NA 
-    
+
   } else {
     loop_temp <- loop_temp_final    
     rownames(loop_temp) <- NULL
@@ -136,7 +132,7 @@ while ( nrowremoved !=0 ) {
 }
 
 write.table(loop_temp_final, "Working_Intron_Annotation_DMSO.txt", sep="\t", row.names = FALSE )
-write.table(loop_temp_flagged, "Flagged_Intron_Annotation_MEL.txt", sep="\t", row.names = FALSE )
+write.table(loop_temp_flagged, "Flagged_Intron_Annotation_DMSO.txt", sep="\t", row.names = FALSE )
 
 
 
